@@ -1,0 +1,197 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r}
+options(max.print=1000000)
+library(readxl)
+library(dplyr)
+fileName <- "ANZ synthesised transaction dataset.xlsx"
+df <- as.data.frame(read_xlsx(fileName))
+
+# df %>%  rmarkdown::paged_table()
+
+# for (i in seq_along(1:ncol(df)))
+# {
+#   print(paste("Column ", i, " = ", sum(is.na(df[i]))))
+# }
+summary(df$amount)
+df
+#print(df[, 'amount'])
+
+```
+```{r}
+
+### Average Transaction amount ###
+avg_transaction <- mean(df$amount)
+
+{
+  plot(avg_transaction, ylab="Average Transaction")
+  abline(h=avg_transaction, col='blue')
+  legend("topright", legend=paste("Mean: ", round(avg_transaction, digits=2)),
+       col="blue", lty=1:2, cex=0.8)
+  title(expression(phantom("title (") * "Average Transaction Amount"), col.main = "purple")
+}
+```
+```{r}
+
+library(dplyr)
+library(ggplot2)
+df$date <- as.Date(df$date)
+week_var <- strftime(df$date, format = "%V")
+week_var <- factor(week_var)
+amount_spent_weekly <- aggregate(df$amount, list(week_var), sum)
+week_numbers <- c()
+week_start <- as.numeric(amount_spent_weekly$Group.1[1])
+week_end <- length(amount_spent_weekly$Group.1)
+for (i in seq_along(week_start:week_end)){
+  week_numbers <- append(week_numbers, i+1 - week_start)
+}
+
+{
+  png(filename="weekly_amount.png", width=1350, height=600)
+  
+  ### ggplot init
+  
+  plt <- ggplot(amount_spent_weekly, aes(week_numbers, x, group=1))
+  
+  ### Labels
+  
+  l <- labs(x="Week", y="Amount", title="Amount by week")
+  
+  ### theme start
+  
+  t<- theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size=12, face="bold", colour = "blue"), 
+            plot.title = element_text(size=16, face= "bold", colour= "brown" ),
+    axis.title.x = element_text(size=14, face="bold", colour = "orange"),    
+    axis.title.y = element_text(size=14, face="bold", colour = "orange"),    
+    #axis.text.x = element_text(size=12, face="bold", colour = "black"), 
+    axis.text.y = element_text(size=12, face="bold", colour = "blue")) 
+  
+  ###theme end
+  
+  print(plt+geom_point(size=6, col="red")+geom_line(color="blue", size=1)+l+t + scale_x_continuous(breaks=seq(1, 14, 1)))
+  dev.off()
+}
+  print(plt+geom_point(size=6, col="red")+geom_line(color="blue", size=1)+l+t + scale_x_continuous(breaks=seq(1, 14, 1)))
+
+
+```
+
+```{r}
+library(ggdemetra)
+#### Finding and pointing Outliers #####
+{
+  png(filename="outliers.png", width=1350, height=600)
+  
+  ### Labels
+  
+  l1 <- labs(x="Names", y="Average Value", title="Outliers", colour='Outliers', size=14)
+  
+  ### Theme Start
+      
+  t<- theme(legend.position = c(.98, .98), legend.justification = c("right", "top"),axis.text=element_text(size=12), axis.title=element_text(size=14,face="bold"), 
+     legend.title=element_text(colour='red', size=19), axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size=12))
+  
+  ### Geom_Point
+  gp <- geom_point(col='blue', size=4)
+  
+  ### Geom_Text
+  gt <- geom_text(aes(label= ifelse(mean_amount_by_names[, 'x'] > quantile(mean_amount_by_names[, 'x'], 0.97) | mean_amount_by_names[, 'x'] < quantile(mean_amount_by_names[, 'x'], 0.01),
+     as.character(mean_amount_by_names[, 'Group.1']),'')),hjust=0,vjust=1,size=6,show.legend =T)
+  ### Lapply, ggplot
+  list_plots <- lapply(mean_amount_by_names[-1], function(data) 
+     ggplot(mean_amount_by_names, aes(x= Group.1, y = x, colour='orange', label=mean_amount_by_names[, 'Group.1'])) + t + l1 + gp + gt)
+
+  print(list_plots[[1]])
+  dev.off()
+}
+```
+```{r}
+library(lubridate)
+library(dplyr)
+library(collapsibleTree)
+# df %>% 
+#   mutate(months = month(as.POSIXlt(month_extract, format="%d-%m-%Y"))) -> df
+
+# arrange_by_month <- arrange(df, df$months)
+# fa <- factor(df$months)
+# fa <- factor(fa, levels=c(8, 9, 10))
+amount_account_data <- c()
+# x<-arrange(df, df$first_name)
+#new_data$'Name' <- append(new_data, factor(x$first_name))
+account_fact <- factor(x$account)
+p <- aggregate(df$amount, list(account_fact), sum)
+customer_id_fact <- factor(x$customer_id)
+amount_account_data <- append(amount_account_data, p)
+z <- c()
+for (o in levels(customer_id_fact)){
+  z <- append(z, o) #z
+}
+z <- bind_rows(as.data.frame(z))
+amount_account_data <- append(amount_account_data, z)
+
+
+```
+
+```{r}
+library(webshot)
+z1 <- c()
+namesA <- c()
+x <- data.frame(x)
+for (k in seq_along(1:100)){
+  namesA <- filter(x, x$account == amount_account_data$Group.1[k]) 
+  z1 <- append(z1, namesA$first_name[1])
+}
+z1 <- bind_rows(as.data.frame(z1))
+amount_account_data <- append(amount_account_data, z1)
+amount_account_data
+amount_account_data <- as.data.frame(amount_account_data)
+
+# widgetToPng <- function(widget, file = "widget.png",  ...) {
+#   temp <- tempfile(fileext = ".html")
+#   file <- R.utils::getAbsolutePath(file)
+#   htmlwidgets::saveWidget(widget, temp)
+#   webshot(
+#     temp, file,
+#     selector = "#htmlwidget_container",
+#     zoom = 2,
+#     delay = 0.5,
+#     ...
+#   )
+# }
+# widgetToPng(
+#   collapsibleTreeSummary(
+#   amount_account_data,
+#   hierarchy = c("z1", "Group.1", "z", 'x'),
+#   width = 1100,
+#   height=1400,
+#   collapsed = FALSE,
+#   maxPercent = 50,
+#   root = "Customer Details",
+#   zoomable = FALSE
+# ),
+#   "CustomerDetailsTree.png"
+# )
+c <- collapsibleTree(
+  amount_account_data,
+  hierarchy = c("z1", "Group.1", "z", 'x'),
+  fill="lightsteelblue",
+  root = "Customer Details",
+  width = 1100,
+  height=1400,
+  zoomable = FALSE,
+  collapsed = TRUE,
+)
+htmltools::save_html(c, file='CustomerDetailsTree.html')
+
+```
+
+```{r}
+
+
+
+```
+
