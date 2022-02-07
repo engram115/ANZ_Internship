@@ -10,7 +10,7 @@ library(readxl)
 library(dplyr)
 fileName <- "ANZ synthesised transaction dataset.xlsx"
 df <- as.data.frame(read_xlsx(fileName))
-
+xl <- df
 # df %>%  rmarkdown::paged_table()
 
 # for (i in seq_along(1:ncol(df)))
@@ -23,6 +23,7 @@ df
 
 ```
 ```{r}
+
 
 ### Average Transaction amount ###
 avg_transaction <- mean(df$amount)
@@ -81,50 +82,17 @@ for (i in seq_along(week_start:week_end)){
 ```
 
 ```{r}
-library(ggdemetra)
-#### Finding and pointing Outliers #####
-{
-  png(filename="outliers.png", width=1350, height=600)
-  
-  ### Labels
-  
-  l1 <- labs(x="Names", y="Average Value", title="Outliers", colour='Outliers', size=14)
-  
-  ### Theme Start
-      
-  t<- theme(legend.position = c(.98, .98), legend.justification = c("right", "top"),axis.text=element_text(size=12), axis.title=element_text(size=14,face="bold"), 
-     legend.title=element_text(colour='red', size=19), axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size=12))
-  
-  ### Geom_Point
-  gp <- geom_point(col='blue', size=4)
-  
-  ### Geom_Text
-  gt <- geom_text(aes(label= ifelse(mean_amount_by_names[, 'x'] > quantile(mean_amount_by_names[, 'x'], 0.97) | mean_amount_by_names[, 'x'] < quantile(mean_amount_by_names[, 'x'], 0.01),
-     as.character(mean_amount_by_names[, 'Group.1']),'')),hjust=0,vjust=1,size=6,show.legend =T)
-  ### Lapply, ggplot
-  list_plots <- lapply(mean_amount_by_names[-1], function(data) 
-     ggplot(mean_amount_by_names, aes(x= Group.1, y = x, colour='orange', label=mean_amount_by_names[, 'Group.1'])) + t + l1 + gp + gt)
-
-  print(list_plots[[1]])
-  dev.off()
-}
-```
-```{r}
 library(lubridate)
 library(dplyr)
 library(collapsibleTree)
-# df %>% 
-#   mutate(months = month(as.POSIXlt(month_extract, format="%d-%m-%Y"))) -> df
 
-# arrange_by_month <- arrange(df, df$months)
-# fa <- factor(df$months)
-# fa <- factor(fa, levels=c(8, 9, 10))
 amount_account_data <- c()
-# x<-arrange(df, df$first_name)
-#new_data$'Name' <- append(new_data, factor(x$first_name))
-account_fact <- factor(x$account)
+
+df <- arrange(df, factor(df$account))
+
+account_fact <- factor(df$account)
 p <- aggregate(df$amount, list(account_fact), sum)
-customer_id_fact <- factor(x$customer_id)
+customer_id_fact <- factor(df$customer_id)
 amount_account_data <- append(amount_account_data, p)
 z <- c()
 for (o in levels(customer_id_fact)){
@@ -137,17 +105,16 @@ amount_account_data <- append(amount_account_data, z)
 ```
 
 ```{r}
-library(webshot)
+#library(webshot)
 z1 <- c()
 namesA <- c()
-x <- data.frame(x)
+
 for (k in seq_along(1:100)){
-  namesA <- filter(x, x$account == amount_account_data$Group.1[k]) 
+  namesA <- filter(df, df$account == amount_account_data$Group.1[k]) 
   z1 <- append(z1, namesA$first_name[1])
 }
 z1 <- bind_rows(as.data.frame(z1))
 amount_account_data <- append(amount_account_data, z1)
-amount_account_data
 amount_account_data <- as.data.frame(amount_account_data)
 
 # widgetToPng <- function(widget, file = "widget.png",  ...) {
@@ -178,7 +145,6 @@ amount_account_data <- as.data.frame(amount_account_data)
 c <- collapsibleTree(
   amount_account_data,
   hierarchy = c("z1", "Group.1", "z", 'x'),
-  fill="lightsteelblue",
   root = "Customer Details",
   width = 1100,
   height=1400,
@@ -190,7 +156,34 @@ htmltools::save_html(c, file='CustomerDetailsTree.html')
 ```
 
 ```{r}
+p1<-data.frame()
+p1 <- aggregate(df$amount, list(account_fact), mean)
 
+{
+  png(filename="outliers.png", width=1350, height=600)
+  
+  ### Labels
+  
+  l1 <- labs(x="Names", y="Average Value", title="Outliers", colour='Outliers', size=14)
+  
+  ### Theme Start
+      
+  t<- theme(legend.position = c(.98, .98), legend.justification = c("right", "top"),axis.text=element_text(size=12), axis.title=element_text(size=14,face="bold"), 
+     legend.title=element_text(colour='red', size=19), axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size=12))
+  
+  ### Geom_Point
+  gp <- geom_point(col='blue', size=4)
+  
+  ### Geom_Text
+  gt <- geom_text(aes(label= ifelse(p1[, 'x'] > quantile(p1[, 'x'], 0.97) | p1[, 'x'] < quantile(p1[, 'x'], 0.01),
+     as.character(p1[, 'Group.1']),'')),hjust=0,vjust=1,size=6,show.legend =T)
+  ### Lapply, ggplot
+  list_plots <- lapply(p1[-1], function(data) 
+     ggplot(p1, aes(x= Group.1, y = x, colour='orange', label=p1[, 'Group.1'])) + t + l1 + gp + gt)
+
+  print(list_plots[[1]])
+  dev.off()
+}
 
 
 ```
