@@ -167,3 +167,33 @@ age_wise$'age_num' <- ageNum_vector
 
 ```
 
+```{r}
+mean_age <- aggregate(sum_age_individual$x, list(factor(sum_age_individual$Group.2)), mean)
+mean_age <- data.frame(mean_age)
+mean_age$Group.1 <- as.numeric(as.character(mean_age$Group.1))
+linear_regression <- lm(x ~ Group.1, data = mean_age)
+
+{
+  png(filename="Salaries_by_ages.png", width=1400, height=600)
+  
+  tta <- theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size=12, face="bold", colour = "blue"), 
+              plot.title = element_text(size=16, face= "bold", colour= "brown"),
+    axis.title.x = element_text(size=14, face="bold", colour = "orange"),    
+    axis.title.y = element_text(size=14, face="bold", colour = "orange"),    
+    #axis.text.x = element_text(size=12, face="bold", colour = "black"), 
+    axis.text.y = element_text(size=12, face="bold", colour = "blue"))
+  lA1 <- labs(x="Age", y="Total Salary", title="Salaries by ages")
+  plt_AB <- ggplot(mean_age, aes(x=Group.1, y=x)) + geom_smooth(formula=y~x, method='lm', se=FALSE)
+  plt_AB1 <- plt_AB  + geom_point(size=2.5, col='red', show.legend = TRUE)+ tta + lA1 + scale_x_continuous(breaks=seq(18, 78, 1))
+  print(plt_AB1)
+  dev.off()
+}
+print(plt_AB1)
+predictions <- predict(linear_regression, data.frame(Group.1=53))
+predictions
+# summarize results
+library(caret)
+library(klaR)
+#confusionMatrix(predictions, data.frame(Group.1=53))
+```
+
