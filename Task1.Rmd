@@ -11,17 +11,9 @@ library(dplyr)
 fileName <- "ANZ synthesised transaction dataset.xlsx"
 df <- as.data.frame(read_xlsx(fileName))
 xl <- df
-# df %>%  rmarkdown::paged_table()
-
-# for (i in seq_along(1:ncol(df)))
-# {
-#   print(paste("Column ", i, " = ", sum(is.na(df[i]))))
-# }
-summary(df$amount)
-df
-#print(df[, 'amount'])
 
 ```
+
 ```{r}
 
 
@@ -36,6 +28,7 @@ avg_transaction <- mean(df$amount)
   title(expression(phantom("title (") * "Average Transaction Amount"), col.main = "purple")
 }
 ```
+
 ```{r}
 
 library(dplyr)
@@ -117,6 +110,17 @@ z1 <- bind_rows(as.data.frame(z1))
 amount_account_data <- append(amount_account_data, z1)
 amount_account_data <- as.data.frame(amount_account_data)
 
+c <- collapsibleTree(
+  amount_account_data,
+  hierarchy = c("z1", "Group.1", "z", 'x'),
+  root = "Customer Details",
+  width = 1100,
+  height=1400,
+  zoomable = FALSE,
+  collapsed = TRUE,
+)
+htmltools::save_html(c, file='CustomerDetailsTree.html')
+nrow(df)
 # widgetToPng <- function(widget, file = "widget.png",  ...) {
 #   temp <- tempfile(fileext = ".html")
 #   file <- R.utils::getAbsolutePath(file)
@@ -142,16 +146,7 @@ amount_account_data <- as.data.frame(amount_account_data)
 # ),
 #   "CustomerDetailsTree.png"
 # )
-c <- collapsibleTree(
-  amount_account_data,
-  hierarchy = c("z1", "Group.1", "z", 'x'),
-  root = "Customer Details",
-  width = 1100,
-  height=1400,
-  zoomable = FALSE,
-  collapsed = TRUE,
-)
-htmltools::save_html(c, file='CustomerDetailsTree.html')
+
 
 ```
 
@@ -164,11 +159,11 @@ p1 <- aggregate(df$amount, list(account_fact), mean)
   
   ### Labels
   
-  l1 <- labs(x="Names", y="Average Value", title="Outliers", colour='Outliers', size=14)
+  l1 <- labs(x="Accout ID", y="Average Value", title="Outliers", colour='Outliers', size=14)
   
   ### Theme Start
       
-  t<- theme(legend.position = c(.98, .98), legend.justification = c("right", "top"),axis.text=element_text(size=12), axis.title=element_text(size=14,face="bold"), 
+  t1<- theme(legend.position = c(.98, .98), legend.justification = c("right", "top"),axis.text=element_text(size=12), axis.title=element_text(size=14,face="bold"), 
      legend.title=element_text(colour='red', size=19), axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size=12))
   
   ### Geom_Point
@@ -179,11 +174,44 @@ p1 <- aggregate(df$amount, list(account_fact), mean)
      as.character(p1[, 'Group.1']),'')),hjust=0,vjust=1,size=6,show.legend =T)
   ### Lapply, ggplot
   list_plots <- lapply(p1[-1], function(data) 
-     ggplot(p1, aes(x= Group.1, y = x, colour='orange', label=p1[, 'Group.1'])) + t + l1 + gp + gt)
+     ggplot(p1, aes(x= Group.1, y = x, colour='orange', label=p1[, 'Group.1'])) + t1 + l1 + gp + gt)
 
   print(list_plots[[1]])
   dev.off()
 }
+
+
+```
+
+```{r}
+
+p2 <-data.frame()
+p2<-aggregate(df$amount, list(factor(df$merchant_long_lat)), sum)
+{
+  png(filename="merchant_long_lat.png", width=1400, height=800)
+  
+  ### Labels
+  
+  l2 <- labs(x="Merchants Location", y="Total Amount", title="Amount Information w/ Merchant Lat Long")
+  
+  ### Theme Start
+      
+  t2<- theme(axis.text=element_text(size=12), axis.title=element_text(size=20,face="bold"),
+     axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size=8, face='bold'))
+  
+  ### Geom_Point
+  gp2 <- geom_point(col='blue', size=4)
+  
+  ### Geom_Text
+  gt2 <- geom_text(aes(label=ifelse(p2[, 'x']>=4000, as.character(p2[, 'Group.1']),''), hjust=0,vjust=1,size=10))
+  ### Lapply, ggplot
+  
+  ggplt <- ggplot(p2, aes(x= 1:length(p2$Group.1), y = x)) +  l2 + t2 + gp2 + gt2
+
+  print(ggplt)
+  dev.off()
+}
+
 
 
 ```

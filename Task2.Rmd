@@ -1,0 +1,169 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+ 
+
+```{r}
+
+# For this task, you’ll likely need to use statistical software such as R, SAS, or Python.
+# 
+# Using the same transaction dataset, identify the annual salary for each customer
+# 
+# Explore correlations between annual salary and various customer attributes (e.g. age). These attributes could be those that are readily available in the data (e.g. age) or those that you construct or derive yourself (e.g. those relating to purchasing behaviour). Visualise any interesting correlations using a scatter plot.
+# 
+# Build a simple regression model to predict the annual salary for each customer using the attributes you identified above
+# 
+# How accurate is your model? Should ANZ use it to segment customers (for whom it does not have this data) into income brackets for reporting purposes?
+# 
+# For a challenge: build a decision-tree based model to predict salary. Does it perform better? How would you accurately test the performance of this model?
+
+
+options(max.print=1000000)
+library(readxl)
+library(dplyr)
+fileName_task2 <- "ANZ synthesised transaction dataset.xlsx"
+df_task2 <- as.data.frame(read_xlsx(fileName_task2))
+df_task2
+```
+
+```{r}
+library(ggplot2)
+### Annual Salary of each customer ###
+salary <- data.frame()
+salary <- subset(df_task2, df_task2$txn_description=='PAY/SALARY')
+salary <- salary[, c('first_name', 'txn_description', 'amount', 'account')]
+salary_sum <- data.frame()
+salary_sum <- aggregate(salary$amount, list(factor(salary$account)), sum)
+names_account_ids <- data.frame()
+names_account_ids <- salary[c('first_name', 'account', 'amount')]
+names_account_ids_arrange <- data.frame()
+names_account_ids_arrange <- arrange(names_account_ids, list(factor(names_account_ids$account)))
+sum_of_salaries <- data.frame()
+sum_of_salaries <- aggregate(names_account_ids_arrange$amount, list(factor(names_account_ids_arrange$account) ), sum)
+
+{
+  png(filename="Salary.png", width=1350, height=600)
+  
+  ### ggplot init
+  
+  plt <- ggplot(sum_of_salaries, aes(Group.1, x, group=1))
+  
+  ### Labels
+  
+  l <- labs(x="Accounts", y="Total Salary", title="Salaries drawn by customers")
+  
+  ### theme start
+  
+  t<- theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size=12, face="bold", colour = "blue"), 
+            plot.title = element_text(size=16, face= "bold", colour= "brown" ),
+    axis.title.x = element_text(size=14, face="bold", colour = "orange"),    
+    axis.title.y = element_text(size=14, face="bold", colour = "orange"),    
+    #axis.text.x = element_text(size=12, face="bold", colour = "black"), 
+    axis.text.y = element_text(size=12, face="bold", colour = "blue")) 
+  
+  ###theme end
+  
+  print(plt+geom_point(size=4, col="red")+l+t)
+  dev.off()
+}
+print(plt+geom_point(size=4, col="red")+l+t)
+
+```
+```{r}
+library(ggplot2)
+library(ggrepel)
+### Annual Salary of each customer ###
+salary1 <- data.frame()
+salary1 <- subset(df_task2, df_task2$txn_description=='PAY/SALARY')
+salary1 <- salary1[, c('first_name', 'txn_description', 'amount', 'account', 'age')]
+salary_sum1 <- data.frame()
+salary_sum1 <- aggregate(salary1$amount, list(factor(salary1$account)), sum)
+names_account_ids1 <- data.frame()
+names_account_ids1 <- salary1[c('first_name', 'account', 'amount', 'age')]
+names_account_ids_arrange1 <- data.frame()
+names_account_ids_arrange1 <- arrange(names_account_ids1, list(factor(names_account_ids1$account)))
+names_account_ids_arrange1 <- arrange(names_account_ids_arrange1, list(factor(names_account_ids_arrange1$account)))
+sum_of_salaries1 <- data.frame()
+sum_of_salaries1 <- aggregate(names_account_ids_arrange1$amount, list(factor(names_account_ids_arrange1$account) ), sum)
+age_wise <- data.frame()
+age_wise <- with(names_account_ids_arrange1, names_account_ids_arrange1[order(age, amount),])
+age_wise <- aggregate(age_wise$amount, list(factor(names_account_ids_arrange1$age)), sum)
+ageNum <- table(df_task2$age)
+ageNum_vector <- c()
+for (i in seq_along(1:length(ageNum))){
+  ageNum_vector <- append(ageNum_vector, ageNum[[i]])
+}
+age_wise$'age_num' <- ageNum_vector
+
+{
+  png(filename="Salary_age_wise.png", width=1200, height=500)
+  
+  ### ggplot init
+  
+  plt <- ggplot(age_wise, aes(Group.1, x))
+  
+  ### Labels
+  
+  l <- labs(x="Age", y="Total Salary", title="Salaries Age Wise")
+  
+  ### theme start
+  
+  t<- theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size=12, face="bold", colour = "blue"), 
+            plot.title = element_text(size=16, face= "bold", colour= "brown" ),
+    axis.title.x = element_text(size=14, face="bold", colour = "orange"),    
+    axis.title.y = element_text(size=14, face="bold", colour = "orange"),    
+    #axis.text.x = element_text(size=12, face="bold", colour = "black"), 
+    axis.text.y = element_text(size=12, face="bold", colour = "blue")) 
+  
+  ###theme end
+  
+  print(plt+geom_point(size=6, show.legend = TRUE)+l+t + geom_label_repel(aes(label = age_wise$age_num),
+                  box.padding   = 1,
+                  label.size = 0.5,
+                  point.padding = 0.5,
+                  segment.color = 'blue') + geom_hline(yintercept=mean(age_wise$x), show.legend = TRUE, colour='green', size=1.5))
+  dev.off()
+}
+
+```
+
+```{r}
+#### Plot of first 30 Observations ###########
+{
+  png(filename="Sum_Age_Individual.png", width=1400, height=600)
+  sum_age_individual <- aggregate(names_account_ids_arrange1$amount, list(factor(names_account_ids_arrange1$account), factor(names_account_ids_arrange1$age) ), sum)
+  tt<- theme(axis.ticks.x = element_blank(),
+        axis.text.x = element_blank(), plot.title = element_text(size=16, face= "bold", colour= "brown"), strip.text = element_text(size = 20, color = "dark green"),
+    axis.title.x = element_text(size=14, face="bold", colour = "orange"),    
+    axis.title.y = element_text(size=14, face="bold", colour = "orange"),    
+    #axis.text.x = element_text(size=12, face="bold", colour = "black"), 
+    axis.text.y = element_text(size=12, face="bold", colour = "blue"))
+  lA <- labs(x="Accounts", y="Total Salary", title="Salaries by Individual Age")
+  plt_A <- ggplot(sum_age_individual[1:46, ], aes(Group.1, x, group=Group.2))
+  plt_A1 <- plt_A + facet_grid(. ~ Group.2) + geom_point(size=2.5, col='red') +lA + tt
+  print(plt_A1)
+  dev.off()
+}
+
+#### Plot of first 31-60 Observations ###########
+{
+  png(filename="Sum_Age_Individual1.png", width=1200, height=600)
+  lB <- labs(x="Accounts", y="Total Salary", title="Salaries by Individual Age")
+  plt_B <- ggplot(sum_age_individual[47:73, ], aes(Group.1, x, group=Group.2))
+  plt_B1 <- plt_B + facet_grid(. ~ Group.2) + geom_point(size=2.5, col='red') + lB + tt
+  print(plt_B1)
+  dev.off()
+}
+#### Plot of first 61-100 Observations ###########
+{
+  png(filename="Sum_Age_Individual2.png", width=1200, height=600)
+  lC <- labs(x="Accounts", y="Total Salary", title="Salaries by Individual Age")
+  plt_C <- ggplot(sum_age_individual[74:100, ], aes(Group.1, x, group=Group.2))
+  plt_C1 <- plt_C + facet_grid(. ~ Group.2) + geom_point(size=2.5, col='red') + lC + tt
+  print(plt_C1)
+  dev.off()
+}
+
+```
+
